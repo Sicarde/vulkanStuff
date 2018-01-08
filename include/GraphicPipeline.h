@@ -15,7 +15,7 @@ public:
 	GraphicPipeline();
 	~GraphicPipeline();
 
-	void createGraphicsPipeline(VkDevice device, SwapChain &swapChain, RenderPass &renderPass);
+	std::string createGraphicsPipeline(VkDevice device, SwapChain &swapChain, RenderPass &renderPass);
 	VkShaderModule createShaderModule(VkDevice device, const std::vector<char>& code);
 };
 

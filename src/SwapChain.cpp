@@ -15,7 +15,7 @@ SwapChain::SwapChain() {
 SwapChain::~SwapChain() {
 }
 
-void SwapChain::createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, VkDevice device, GLFWwindow* window) {
+std::string SwapChain::createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, VkDevice device, GLFWwindow* window) {
 	_pDevice = &pDevice;
 	_surface = &surface;
 	_device = &device;
@@ -42,7 +42,7 @@ void SwapChain::createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, V
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = pDevice.findQueueFamilies(surface);
+	QueueFamilyIndices indices = pDevice.findQueueFamilies(surface, pDevice.physicalDevice);
 	uint32_t queueFamilyIndices[] = { (uint32_t)indices.graphicsFamily, (uint32_t)indices.presentFamily };
 
 	if (indices.graphicsFamily != indices.presentFamily) {
@@ -60,7 +60,7 @@ void SwapChain::createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, V
 	createInfo.clipped = VK_TRUE;
 
 	if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create swap chain!");
+		return "failed to create swap chain!";
 	}
 
 	vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
@@ -69,9 +69,10 @@ void SwapChain::createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, V
 
 	swapChainImageFormat = surfaceFormat.format;
 	swapChainExtent = extent;
+	return "";
 }
 
-void SwapChain::createImageViews(VkDevice device) {
+std::string SwapChain::createImageViews(VkDevice device) {
 	swapChainImageViews.resize(swapChainImages.size());
 
 	for (size_t i = 0; i < swapChainImages.size(); i++) {
@@ -91,12 +92,13 @@ void SwapChain::createImageViews(VkDevice device) {
 		createInfo.subresourceRange.layerCount = 1;
 
 		if (vkCreateImageView(device, &createInfo, nullptr, &swapChainImageViews[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create image views!");
+			return "failed to create image views!";
 		}
 	}
+	return "";
 }
 
-void SwapChain::cleanupSwapChain(VkDevice device, RenderPass &renderPass, GraphicPipeline &graphicPipeline, CommandBuffer &cb) {
+void SwapChain::cleanupSwapChain(VkDevice device, RenderPass &renderPass, GraphicPipeline &graphicPipeline, CommandBuffer &cb, VkCommandPool &commandPool) {
 	for (auto framebuffer : swapChainFramebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
@@ -114,19 +116,26 @@ void SwapChain::cleanupSwapChain(VkDevice device, RenderPass &renderPass, Graphi
 	vkDestroySwapchainKHR(device, swapChain, nullptr);
 }
 
-void SwapChain::recreateSwapChain(VkDevice device, RenderPass &renderPass, Framebuffer &fb, GraphicPipeline &graphicPipeline, CommandBuffer &cb) {
+std::string SwapChain::recreateSwapChain(VkDevice device, RenderPass &renderPass, Framebuffer &fb, GraphicPipeline &graphicPipeline, CommandBuffer &cb, VkCommandPool &commandPool) {
+	std::string err;
 	vkDeviceWaitIdle(device);
 
-	cleanupSwapChain(device, renderPass, graphicPipeline, cb);
+	cleanupSwapChain(device, renderPass, graphicPipeline, cb, commandPool);
 
 	if (!_pDevice || !_surface || !_window)
-		return;
-	createSwapChain(*_pDevice, *_surface, device, _window);
-	createImageViews(device);
-	renderPass.createRenderPass(device, *this);
-	graphicPipeline.createGraphicsPipeline(device, *this, renderPass);
-	fb.createFramebuffers(device, *this, renderPass);
-	cb.createCommandBuffers(device, *this, renderPass, graphicPipeline);
+		return "";
+	err = createSwapChain(*_pDevice, *_surface, device, _window);
+	if (err != "") return err;
+	err = createImageViews(device);
+	if (err != "") return err;
+	err = renderPass.createRenderPass(device, *this);
+	if (err != "") return err;
+	err = graphicPipeline.createGraphicsPipeline(device, *this, renderPass);
+	if (err != "") return err;
+	err = fb.createFramebuffers(device, *this, renderPass);
+	if (err != "") return err;
+	err = cb.createCommandBuffers(device, *this, renderPass, graphicPipeline, commandPool);
+	if (err != "") return err;
 }
 
 VkSurfaceFormatKHR SwapChain::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats) {
@@ -178,7 +187,7 @@ VkExtent2D SwapChain::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilit
 	}
 }
 
-SwapChainSupportDetails SwapChain::querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface) {
+SwapChainSupportDetails SwapChain::querySwapChainSupport(VkPhysicalDevice const &device, VkSurfaceKHR const &surface) const {
 	SwapChainSupportDetails details;
 
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);

@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 
 #include <iostream>
+#include <string>
 #include <fstream>
 #include <stdexcept>
 #include <algorithm>
@@ -45,9 +46,18 @@ void DestroyDebugReportCallbackEXT(VkInstance instance, VkDebugReportCallbackEXT
 class HelloTriangleApplication {
 public:
 	void run() {
+		std::string err;
 		initWindow();
-		initVulkan();
-		mainLoop();
+		err = initVulkan();
+		if (err != "") {
+			std::cout << err << '\n';
+			return;
+		}
+		err = mainLoop();
+		if (err != "") {
+			std::cout << err << '\n';
+			return;
+		}
 		cleanup();
 	}
 
@@ -85,33 +95,51 @@ private:
 		glfwSetWindowSizeCallback(window, HelloTriangleApplication::onWindowResized);
 	}
 
-	void initVulkan() {
-		createInstance();
-		setupDebugCallback();
-		createSurface();
-		physicalDevice.pickPhysicalDevice(instance, swapChain, surface, device); //TODO why swap chain given before creation ?
-		physicalDevice.createLogicalDevice(surface, device, graphicsQueue, presentQueue);
-		swapChain.createSwapChain(physicalDevice, surface, device, window);
-		swapChain.createImageViews(device);
-		renderPass.createRenderPass(device, swapChain);
-		graphicPipeline.createGraphicsPipeline(device, swapChain, renderPass);
-		fb.createFramebuffers(device, swapChain, renderPass);
-		createCommandPool();
-		cb.createCommandBuffers(device, swapChain, renderPass, graphicPipeline);
-		createSemaphores();
+	std::string initVulkan() {
+		std::string err;
+		err = createInstance();
+		if (err != "") return err;
+		err = setupDebugCallback();
+		if (err != "") return err;
+		err = createSurface();
+		if (err != "") return err;
+		err = physicalDevice.pickPhysicalDevice(instance, swapChain, surface, device); //TODO why swap chain given before creation ?
+		if (err != "") return err;
+		err = physicalDevice.createLogicalDevice(surface, device, graphicsQueue, presentQueue);
+		if (err != "") return err;
+		err = swapChain.createSwapChain(physicalDevice, surface, device, window);
+		if (err != "") return err;
+		err = swapChain.createImageViews(device);
+		if (err != "") return err;
+		err = renderPass.createRenderPass(device, swapChain);
+		if (err != "") return err;
+		err = graphicPipeline.createGraphicsPipeline(device, swapChain, renderPass);
+		if (err != "") return err;
+		err = fb.createFramebuffers(device, swapChain, renderPass);
+		if (err != "") return err;
+		err = createCommandPool();
+		if (err != "") return err;
+		err = cb.createCommandBuffers(device, swapChain, renderPass, graphicPipeline, commandPool);
+		if (err != "") return err;
+		err = createSemaphores();
+		if (err != "") return err;
+		return "";
 	}
 
-	void mainLoop() {
+	std::string mainLoop() {
+		std::string err;
 		while (!glfwWindowShouldClose(window)) {
 			glfwPollEvents();
-			drawFrame();
+			err = drawFrame();
+			if (err != "")
+				return err;
 		}
 
 		vkDeviceWaitIdle(device);
 	}
 
 	void cleanup() {
-		swapChain.cleanupSwapChain(device, renderPass, graphicPipeline, cb);
+		swapChain.cleanupSwapChain(device, renderPass, graphicPipeline, cb, commandPool);
 
 		vkDestroySemaphore(device, renderFinishedSemaphore, nullptr);
 		vkDestroySemaphore(device, imageAvailableSemaphore, nullptr);
@@ -132,12 +160,13 @@ private:
 		if (width == 0 || height == 0) return;
 
 		HelloTriangleApplication* app = reinterpret_cast<HelloTriangleApplication*>(glfwGetWindowUserPointer(window));
-		app->swapChain.recreateSwapChain(device, renderPass, fb, graphicPipeline, cb);
+		//TODO +err
+		//app->swapChain.recreateSwapChain(device, renderPass, fb, graphicPipeline, cb);
 	}
 
-	void createInstance() {
+	std::string createInstance() {
 		if (enableValidationLayers && !checkValidationLayerSupport()) {
-			throw std::runtime_error("validation layers requested, but not available!");
+			return "validation layers requested, but not available!";
 		}
 
 		VkApplicationInfo appInfo = {};
@@ -165,12 +194,13 @@ private:
 		}
 
 		if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create instance!");
+			return "failed to create instance!";
 		}
+		return "";
 	}
 
-	void setupDebugCallback() {
-		if (!enableValidationLayers) return;
+	std::string setupDebugCallback() {
+		if (!enableValidationLayers) return "";
 
 		VkDebugReportCallbackCreateInfoEXT createInfo = {};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT;
@@ -178,49 +208,52 @@ private:
 		createInfo.pfnCallback = debugCallback;
 
 		if (CreateDebugReportCallbackEXT(instance, &createInfo, nullptr, &callback) != VK_SUCCESS) {
-			throw std::runtime_error("failed to set up debug callback!");
+			return "failed to set up debug callback!";
 		}
+		return "";
 	}
 
-	void createSurface() {
+	std::string createSurface() {
 		if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create window surface!");
+			return "failed to create window surface!";
 		}
+		return "";
 	}
 
-	void createCommandPool() {
-		QueueFamilyIndices queueFamilyIndices = physicalDevice.findQueueFamilies(surface);
+	std::string createCommandPool() {
+		QueueFamilyIndices queueFamilyIndices = physicalDevice.findQueueFamilies(surface, physicalDevice.physicalDevice);
 
 		VkCommandPoolCreateInfo poolInfo = {};
 		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 		poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
 
 		if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create command pool!");
+			return "failed to create command pool!";
 		}
+		return "";
 	}
 
-	void createSemaphores() {
+	std::string createSemaphores() {
 		VkSemaphoreCreateInfo semaphoreInfo = {};
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 		if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &imageAvailableSemaphore) != VK_SUCCESS ||
 			vkCreateSemaphore(device, &semaphoreInfo, nullptr, &renderFinishedSemaphore) != VK_SUCCESS) {
 
-			throw std::runtime_error("failed to create semaphores!");
+			return "failed to create semaphores!";
 		}
+		return "";
 	}
 
-	void drawFrame() {
+	std::string drawFrame() {
 		uint32_t imageIndex;
 		VkResult result = vkAcquireNextImageKHR(device, swapChain.swapChain, std::numeric_limits<uint64_t>::max(), imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-			swapChain.recreateSwapChain(device, renderPass, fb, graphicPipeline, cb);
-			return;
+			return swapChain.recreateSwapChain(device, renderPass, fb, graphicPipeline, cb, commandPool);
 		}
 		else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-			throw std::runtime_error("failed to acquire swap chain image!");
+			return "failed to acquire swap chain image!";
 		}
 
 		VkSubmitInfo submitInfo = {};
@@ -240,7 +273,7 @@ private:
 		submitInfo.pSignalSemaphores = signalSemaphores;
 
 		if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS) {
-			throw std::runtime_error("failed to submit draw command buffer!");
+			return "failed to submit draw command buffer!";
 		}
 
 		VkPresentInfoKHR presentInfo = {};
@@ -258,13 +291,16 @@ private:
 		result = vkQueuePresentKHR(presentQueue, &presentInfo);
 
 		if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-			swapChain.recreateSwapChain(device, renderPass, fb, graphicPipeline, cb);
+			std::string err = swapChain.recreateSwapChain(device, renderPass, fb, graphicPipeline, cb, commandPool);
+			if (err != "")
+				return err;
 		}
 		else if (result != VK_SUCCESS) {
-			throw std::runtime_error("failed to present swap chain image!");
+			return "failed to present swap chain image!";
 		}
 
 		vkQueueWaitIdle(presentQueue);
+		return "";
 	}
 
 	std::vector<const char*> getRequiredExtensions() {

@@ -35,6 +35,10 @@
     <ClCompile Include="src\RenderPass.cpp" />
     <ClCompile Include="src\SwapChain.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="shaders\shaderBase.frag" />
+    <None Include="shaders\shaderBase.vert" />
+  </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{2a3afa32-15a1-4b7c-93ab-96281c1c12d7}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>

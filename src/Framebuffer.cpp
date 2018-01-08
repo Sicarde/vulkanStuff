@@ -10,7 +10,7 @@ Framebuffer::Framebuffer() {
 Framebuffer::~Framebuffer() {
 }
 
-void Framebuffer::createFramebuffers(VkDevice device, SwapChain &swapChain, RenderPass &renderPass) {
+std::string Framebuffer::createFramebuffers(VkDevice const &device, SwapChain &swapChain, RenderPass const &renderPass) {
 	swapChain.swapChainFramebuffers.resize(swapChain.swapChainImageViews.size());
 
 	for (size_t i = 0; i < swapChain.swapChainImageViews.size(); i++) {
@@ -28,8 +28,9 @@ void Framebuffer::createFramebuffers(VkDevice device, SwapChain &swapChain, Rend
 		framebufferInfo.layers = 1;
 
 		if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &swapChain.swapChainFramebuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to create framebuffer!");
+			return "failed to create framebuffer!";
 		}
 	}
+	return "";
 }
 

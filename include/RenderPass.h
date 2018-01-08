@@ -1,5 +1,6 @@
 #pragma once
 #include <vulkan/vulkan.h>
+#include <string>
 
 class SwapChain;
 
@@ -11,6 +12,6 @@ public:
 	RenderPass();
 	~RenderPass();
 
-	void createRenderPass(VkDevice device, SwapChain &swapChain);
+	std::string createRenderPass(VkDevice &device, SwapChain const &swapChain);
 };
 

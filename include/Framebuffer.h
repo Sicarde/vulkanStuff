@@ -12,6 +12,6 @@ public:
 	Framebuffer();
 	~Framebuffer();
 
-	void createFramebuffers(VkDevice device, SwapChain &swapChain, RenderPass &renderPass);
+	std::string createFramebuffers(VkDevice const &device, SwapChain &swapChain, RenderPass const &renderPass);
 };
 

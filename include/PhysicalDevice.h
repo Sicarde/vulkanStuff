@@ -24,10 +24,10 @@ public:
 	PhysicalDevice();
 	~PhysicalDevice();
 
-	void createLogicalDevice(VkSurfaceKHR surface, VkDevice device, VkQueue graphicsQueue, VkQueue presentQueue);
-	void pickPhysicalDevice(VkInstance instance, SwapChain &swapChain, VkSurfaceKHR surface, VkDevice device);
-	bool isDeviceSuitable(VkPhysicalDevice physDevice, VkDevice device, SwapChain &swapChain, VkSurfaceKHR surface);
-	bool checkDeviceExtensionSupport();
-	QueueFamilyIndices findQueueFamilies(VkSurfaceKHR surface);
+	std::string createLogicalDevice(VkSurfaceKHR const &surface, VkDevice &device, VkQueue &graphicsQueue, VkQueue &presentQueue);
+	std::string pickPhysicalDevice(VkInstance const &instance, SwapChain const &swapChain, VkSurfaceKHR const &surface, VkDevice const &device);
+	bool isDeviceSuitable(VkPhysicalDevice const &physDevice, VkDevice const &device, SwapChain const &swapChain, VkSurfaceKHR const &surface) const;
+	bool checkDeviceExtensionSupport(VkPhysicalDevice const &pDevice) const;
+	QueueFamilyIndices findQueueFamilies(VkSurfaceKHR const &surface, VkPhysicalDevice const &pDevice) const;
 };
 

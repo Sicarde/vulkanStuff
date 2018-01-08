@@ -28,7 +28,7 @@ std::vector<char> GraphicPipeline::readFile(const std::string& filename) {
 	return buffer;
 }
 
-void GraphicPipeline::createGraphicsPipeline(VkDevice device, SwapChain &swapChain, RenderPass &renderPass) {
+std::string GraphicPipeline::createGraphicsPipeline(VkDevice device, SwapChain &swapChain, RenderPass &renderPass) {
 	auto vertShaderCode = readFile("shaders/vert.spv");
 	auto fragShaderCode = readFile("shaders/frag.spv");
 
@@ -114,7 +114,7 @@ void GraphicPipeline::createGraphicsPipeline(VkDevice device, SwapChain &swapCha
 	pipelineLayoutInfo.pushConstantRangeCount = 0;
 
 	if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create pipeline layout!");
+		return "failed to create pipeline layout!";
 	}
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
@@ -133,11 +133,12 @@ void GraphicPipeline::createGraphicsPipeline(VkDevice device, SwapChain &swapCha
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 
 	if (vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create graphics pipeline!");
+		return "failed to create graphics pipeline!";
 	}
 
 	vkDestroyShaderModule(device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(device, vertShaderModule, nullptr);
+	return "";
 }
 
 VkShaderModule GraphicPipeline::createShaderModule(VkDevice device, const std::vector<char>& code) {

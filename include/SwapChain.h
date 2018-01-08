@@ -38,10 +38,10 @@ public:
 	SwapChain();
 	~SwapChain();
 
-	void createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, VkDevice device, GLFWwindow* window);
-	void createImageViews(VkDevice device);
-	void cleanupSwapChain(VkDevice device, RenderPass &renderPass, GraphicPipeline &graphicPipeline, CommandBuffer &cb);
-	void recreateSwapChain(VkDevice device, RenderPass &renderPass, Framebuffer &fb, GraphicPipeline &graphicPipeline, CommandBuffer &cb);
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device, VkSurfaceKHR surface);
+	std::string createSwapChain(PhysicalDevice &pDevice, VkSurfaceKHR surface, VkDevice device, GLFWwindow* window);
+	std::string createImageViews(VkDevice device);
+	void cleanupSwapChain(VkDevice device, RenderPass &renderPass, GraphicPipeline &graphicPipeline, CommandBuffer &cb, VkCommandPool &commandPool);
+	std::string recreateSwapChain(VkDevice device, RenderPass &renderPass, Framebuffer &fb, GraphicPipeline &graphicPipeline, CommandBuffer &cb, VkCommandPool &commandPool);
+	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice const &device, VkSurfaceKHR const &surface) const;
 };
 

@@ -8,7 +8,7 @@ RenderPass::RenderPass() {
 RenderPass::~RenderPass() {
 }
 
-void RenderPass::createRenderPass(VkDevice device, SwapChain &swapChain) {
+std::string RenderPass::createRenderPass(VkDevice &device, SwapChain const &swapChain) {
 	VkAttachmentDescription colorAttachment = {};
 	colorAttachment.format = swapChain.swapChainImageFormat;
 	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -46,8 +46,9 @@ void RenderPass::createRenderPass(VkDevice device, SwapChain &swapChain) {
 	renderPassInfo.pDependencies = &dependency;
 
 	if (vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
+		return "failed to create render pass!";
 	}
+	return "";
 }
 
 

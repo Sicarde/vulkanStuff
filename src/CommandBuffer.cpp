@@ -9,7 +9,7 @@ CommandBuffer::CommandBuffer() {
 CommandBuffer::~CommandBuffer() {
 }
 
-void CommandBuffer::createCommandBuffers(VkDevice device, SwapChain &swapChain, RenderPass &renderPass, GraphicPipeline &graphicPipeline) {
+std::string CommandBuffer::createCommandBuffers(VkDevice const &device, SwapChain &swapChain, RenderPass &renderPass, GraphicPipeline &graphicPipeline, VkCommandPool const &commandPool) {
 	commandBuffers.resize(swapChain.swapChainFramebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -19,7 +19,7 @@ void CommandBuffer::createCommandBuffers(VkDevice device, SwapChain &swapChain, 
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 
 	if (vkAllocateCommandBuffers(device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate command buffers!");
+		return "failed to allocate command buffers!";
 	}
 
 	for (size_t i = 0; i < commandBuffers.size(); i++) {
@@ -49,8 +49,9 @@ void CommandBuffer::createCommandBuffers(VkDevice device, SwapChain &swapChain, 
 		vkCmdEndRenderPass(commandBuffers[i]);
 
 		if (vkEndCommandBuffer(commandBuffers[i]) != VK_SUCCESS) {
-			throw std::runtime_error("failed to record command buffer!");
+			return "failed to record command buffer!";
 		}
 	}
+	return "";
 }
 

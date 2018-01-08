@@ -13,5 +13,5 @@ public:
 	CommandBuffer();
 	~CommandBuffer();
 
-	void createCommandBuffers(VkDevice device, SwapChain &swapChain, RenderPass &renderPass, GraphicPipeline &graphicPipeline);
+	std::string createCommandBuffers(VkDevice const &device, SwapChain &swapChain, RenderPass &renderPass, GraphicPipeline &graphicPipeline, VkCommandPool const &commandPool);
 };
